@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React from 'react'
 import {
   Dialog,
   DialogContent,
@@ -19,8 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { toast } from 'sonner'
 import { AlertCircle, Loader2 } from 'lucide-react'
+import { useEntityForm, type EntityFormConfig, type FieldValidation } from '@/app/admin/users/hooks'
 
 interface ClientFormData {
   name: string
