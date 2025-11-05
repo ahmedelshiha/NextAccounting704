@@ -105,9 +105,9 @@ export const WorkstationSidebar = memo(function WorkstationSidebar({
       />
 
       {/* Filters Section - Scrollable */}
-      <div className="sidebar-section sidebar-filters flex-1 overflow-y-auto">
+      <div className="sidebar-section sidebar-filters flex-1 overflow-y-auto" data-testid="filters-section">
         <h3 className="sidebar-title">Filters</h3>
-        <div className="sidebar-filters-container">
+        <div className="sidebar-filters-container" data-testid="filters-container">
           <AdvancedUserFilters
             filters={mappedFilters}
             onFiltersChange={(f) => onFiltersChange?.(f as any)}
@@ -117,11 +117,12 @@ export const WorkstationSidebar = memo(function WorkstationSidebar({
       </div>
 
       {/* Footer - Reset Button */}
-      <div className="sidebar-footer">
+      <div className="sidebar-footer" data-testid="sidebar-footer">
         <button
           className="sidebar-reset-btn"
           onClick={handleResetClick}
           aria-label="Reset all filters"
+          data-testid="reset-filters-btn"
         >
           Reset Filters
         </button>
