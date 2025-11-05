@@ -6,8 +6,7 @@ import service from '@/services/security-settings.service'
 import { SecurityComplianceSettingsSchema } from '@/schemas/settings/security-compliance'
 import { NextRequest } from 'next/server'
 import { verifySuperAdminStepUp, stepUpChallenge } from '@/lib/security/step-up'
-import prisma from '@/lib/prisma'
-import { jsonDiff } from '@/lib/diff'
+import { persistSettingChangeDiff } from '@/lib/settings-diff-helper'
 
 export const GET = withTenantContext(async (request: NextRequest) => {
   try {
@@ -38,18 +37,26 @@ export const PUT = withTenantContext(async (request: NextRequest) => {
       if (!ok) return stepUpChallenge()
     }
     const tenantId = ctx.tenantId
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Tenant context missing' }, { status: 400 })
+    }
     const body = await request.json().catch(() => ({}))
     const parsed = SecurityComplianceSettingsSchema.partial().safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid payload', details: parsed.error.format() }, { status: 400 })
     }
-    const before = await service.get(tenantId).catch(()=>null)
+    const before = await service.get(tenantId).catch(() => null)
     const updated = await service.upsert(tenantId, parsed.data)
 
-    try {
-      await prisma.settingChangeDiff.create({ data: { tenantId, userId: ctx.userId ? String(ctx.userId) : null, category: 'securityCompliance', resource: 'security-settings', before: before || null, after: updated || null } })
-    } catch {}
-    try { await prisma.auditEvent.create({ data: { tenantId, userId: ctx.userId ? String(ctx.userId) : null, type: 'settings.update', resource: 'security-settings', details: { category: 'securityCompliance' } } }) } catch {}
+    // Persist change diff and audit event
+    await persistSettingChangeDiff({
+      tenantId,
+      category: 'securityCompliance',
+      resource: 'security-settings',
+      userId: ctx.userId,
+      before,
+      after: updated,
+    })
 
     return NextResponse.json(updated)
   } catch (e) {
