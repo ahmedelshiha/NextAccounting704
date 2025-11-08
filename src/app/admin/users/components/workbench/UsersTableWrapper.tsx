@@ -90,13 +90,53 @@ export default function UsersTableWrapper({
     context.setProfileOpen(true)
   }, [context])
 
+  const { updateUser, updateUserRole } = useUserActions({ onRefetchUsers: context.refreshUsers, onSuccess: (msg) => toast.success(msg), onError: (err) => toast.error(err) })
+
   const handleRoleChange = useCallback(
     async (userId: string, newRole: UserItem['role']) => {
-      // This would be handled by a mutation
-      console.log(`Changing role for user ${userId} to ${newRole}`)
+      try {
+        await updateUserRole(userId, newRole)
+      } catch (e) {
+        console.error(e)
+      }
     },
-    []
+    [updateUserRole]
   )
+
+  const handleEditInline = useCallback(async (userId: string, field: string, value: any) => {
+    try {
+      await updateUser(userId, { [field]: value })
+    } catch (e) {
+      console.error(e)
+    }
+  }, [updateUser])
+
+  const handleDeleteUser = useCallback(async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return
+    try {
+      await deleteUserApi(userId)
+      toast.success('User deleted')
+      await context.refreshUsers()
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to delete user')
+    }
+  }, [context])
+
+  const handleResetPassword = useCallback(async (email: string) => {
+    try {
+      const res = await fetch('/api/auth/password/forgot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      })
+      if (!res.ok) throw new Error('Failed')
+      toast.success('Password reset email queued')
+    } catch (e) {
+      console.error(e)
+      toast.error('Failed to send reset email')
+    }
+  }, [])
 
   return (
     <>
@@ -113,6 +153,9 @@ export default function UsersTableWrapper({
           isLoading={context.isLoading || context.usersLoading}
           onViewProfile={handleViewProfile}
           onRoleChange={handleRoleChange}
+          onEditInline={handleEditInline}
+          onDeleteUser={handleDeleteUser}
+          onResetPassword={handleResetPassword}
           selectedUserIds={selectedUserIds}
           onSelectUser={handleSelectUser}
           onSelectAll={handleSelectAll}
