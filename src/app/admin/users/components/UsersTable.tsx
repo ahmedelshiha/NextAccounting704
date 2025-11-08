@@ -48,15 +48,6 @@ export const UsersTable = memo(function UsersTable({
   onSelectUser,
   onSelectAll
 }: UsersTableProps) {
-  const perms = usePermissions()
-
-  const handleRoleChange = useCallback(
-    (userId: string, newRole: UserItem['role']) => {
-      onRoleChange?.(userId, newRole).catch(console.error)
-    },
-    [onRoleChange]
-  )
-
   const handleSelectUser = useCallback(
     (userId: string, selected: boolean) => {
       onSelectUser?.(userId, selected)
@@ -71,133 +62,65 @@ export const UsersTable = memo(function UsersTable({
     onSelectAll?.(!allSelected)
   }, [allSelected, onSelectAll])
 
-  // ✅ OPTIMIZED: Use VirtualScroller for handling 100+ users efficiently
-  // Only renders ~10 visible rows instead of all rows
+  const handleEditInline = useCallback(
+    (userId: string, field: string, value: any) => {
+      // This would be handled by a separate mutation/API call
+      console.log(`Edit user ${userId}, field ${field}:`, value)
+    },
+    []
+  )
+
+  // Render a single user row with 6-column grid layout
   const renderUserRow = useCallback(
     (user: UserItem) => (
-      <div
+      <UserRow
         key={user.id}
-        className="flex flex-col gap-3 p-4 bg-white border rounded-lg hover:shadow-sm w-full"
-        role="row"
-        aria-label={`User row for ${user.name || user.email}`}
-      >
-        {/* Top row: Checkbox and user info */}
-        <div className="flex items-start gap-3 min-w-0">
-          <Checkbox
-            checked={selectedUserIds.has(user.id)}
-            onCheckedChange={(checked) => handleSelectUser(user.id, checked === true)}
-            aria-label={`Select ${user.name || user.email}`}
-            className="mt-0.5 flex-shrink-0"
-          />
-          <div
-            className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 text-sm"
-            aria-hidden="true"
-          >
-            {(user.name || user.email).charAt(0).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <button
-              onClick={() => onViewProfile(user)}
-              className="font-medium text-sm sm:text-base text-gray-900 hover:text-blue-600 truncate w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-              aria-label={`View profile for ${user.name || user.email}`}
-            >
-              {user.name || 'Unnamed User'}
-            </button>
-            <div className="text-xs sm:text-sm text-gray-600 truncate">
-              {user.email}
-            </div>
-            <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1 text-xs text-gray-400">
-              <span>Joined {formatDate(user.createdAt)}</span>
-              {user.company && <span className="hidden sm:inline">•</span>}
-              {user.company && <span className="hidden sm:inline">{user.company}</span>}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom row: Status, Role badge, and actions */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 pl-11">
-          <div
-            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(user.status)}`}
-            role="status"
-            aria-label={`Status: ${user.status || 'ACTIVE'}`}
-          >
-            {user.status || 'ACTIVE'}
-          </div>
-          <div
-            className={`px-2 py-1 rounded text-xs font-medium hidden sm:inline-block ${getRoleColor(user.role)}`}
-            role="status"
-            aria-label={`Role: ${user.role}`}
-          >
-            {user.role}
-          </div>
-          {perms.canManageUsers && (
-            <Select value={user.role} onValueChange={(val) => handleRoleChange(user.id, val as UserItem['role'])}>
-              <SelectTrigger
-                className="h-8 text-xs w-24 sm:w-28 flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label={`Change role for ${user.name || user.email}`}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CLIENT">Client</SelectItem>
-                <SelectItem value="TEAM_MEMBER">Team Member</SelectItem>
-                <SelectItem value="TEAM_LEAD">Team Lead</SelectItem>
-                <SelectItem value="STAFF">Staff</SelectItem>
-                <SelectItem value="ADMIN">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-          <div className="flex-1" />
-          <UserActions
-            user={user}
-            onViewProfile={onViewProfile}
-            isLoading={isUpdating}
-          />
-        </div>
-      </div>
+        user={user}
+        isSelected={selectedUserIds.has(user.id)}
+        onSelect={handleSelectUser}
+        onViewProfile={onViewProfile}
+        onEditInline={handleEditInline}
+      />
     ),
-    [onViewProfile, perms.canManageUsers, handleRoleChange, isUpdating, selectedUserIds, handleSelectUser]
+    [selectedUserIds, handleSelectUser, onViewProfile, handleEditInline]
   )
 
   return (
-    <Card className="flex flex-col h-full">
-      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 space-y-0 flex-shrink-0">
-        <div className="space-y-1 min-w-0">
-          <CardTitle className="text-xl sm:text-2xl">User Directory</CardTitle>
-          <CardDescription className="text-xs sm:text-sm">Search, filter and manage users</CardDescription>
+    <div className="flex flex-col h-full bg-white border border-gray-200 rounded-lg">
+      {/* Table Header */}
+      <div className="grid grid-cols-[40px_2fr_2fr_1fr_1fr_80px] items-center gap-4 px-4 py-3 border-b border-gray-200 bg-gray-50 flex-shrink-0" role="row" aria-label="Table header">
+        <div className="flex items-center justify-center">
+          <Checkbox
+            checked={allSelected || someSelected}
+            onCheckedChange={handleSelectAllChange}
+            aria-label={allSelected ? 'Deselect all users' : 'Select all users'}
+            className={someSelected ? 'opacity-50' : ''}
+          />
         </div>
-        {users.length > 0 && (
-          <div className="flex items-center gap-2 text-sm flex-shrink-0" role="toolbar" aria-label="Table selection actions">
-            <Checkbox
-              checked={allSelected || someSelected}
-              onCheckedChange={handleSelectAllChange}
-              aria-label={allSelected ? 'Deselect all users' : 'Select all users'}
-              title={allSelected ? 'Deselect all users' : 'Select all users'}
-              className={someSelected ? 'opacity-50' : ''}
-            />
-            <span className="text-gray-500 text-xs sm:text-sm" aria-live="polite">
-              {selectedUserIds.size > 0 ? `${selectedUserIds.size} selected` : 'Select all'}
-            </span>
-          </div>
-        )}
-      </CardHeader>
-      <CardContent className="flex-1 overflow-hidden p-0">
+        <div className="text-sm font-semibold text-gray-600">Name</div>
+        <div className="text-sm font-semibold text-gray-600">Email</div>
+        <div className="text-sm font-semibold text-gray-600">Role</div>
+        <div className="text-sm font-semibold text-gray-600">Status</div>
+        <div className="text-sm font-semibold text-gray-600">Actions</div>
+      </div>
+
+      {/* Table Body */}
+      <div className="flex-1 overflow-hidden">
         {isLoading ? (
-          <div className="h-full space-y-2 overflow-auto px-6 py-4" role="status" aria-label="Loading users">
+          <div className="h-full space-y-0 overflow-auto" role="status" aria-label="Loading users">
             {Array.from({ length: 8 }).map((_, i) => (
               <UserRowSkeleton key={i} />
             ))}
           </div>
         ) : users.length ? (
           <div
-            role="grid"
-            aria-label="User directory table"
-            aria-rowcount={users.length}
+            role="rowgroup"
+            aria-label="User directory table body"
             className="h-full overflow-hidden"
           >
             <VirtualScroller
               items={users}
-              itemHeight={96}
+              itemHeight={56}
               maxHeight="100%"
               renderItem={(user) => renderUserRow(user)}
               overscan={5}
@@ -210,8 +133,8 @@ export const UsersTable = memo(function UsersTable({
             No users found matching your criteria.
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 })
 
