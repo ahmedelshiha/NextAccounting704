@@ -143,7 +143,8 @@ export function UserDirectoryFilterBarEnhanced({
 
   const handleApplyQuickFilter = useCallback((filterState: FilterState) => {
     onFiltersChange(filterState)
-  }, [onFiltersChange])
+    filterHistory.addEntry(filterState)
+  }, [onFiltersChange, filterHistory])
 
   const handleApplyAdvancedQuery = useCallback((query: FilterGroup | FilterCondition) => {
     const filtered = queryBuilder.applyQueryToUsers(allUsers)
