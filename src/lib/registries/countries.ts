@@ -676,4 +676,7 @@ export function calculateFilingDueDate(
   return dueDate
 }
 
+// Alias for compatibility
+export const countryRegistry = COUNTRY_REGISTRY
+
 export default COUNTRY_REGISTRY

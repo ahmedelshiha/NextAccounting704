@@ -255,3 +255,7 @@ export function getBankingProvider(providerName: string): BankingProvider {
       throw new Error(`Unknown banking provider: ${providerName}`)
   }
 }
+
+// Aliases for compatibility
+export const BankingProviderFactory = { create: getBankingProvider }
+export const createBankingProvider = getBankingProvider

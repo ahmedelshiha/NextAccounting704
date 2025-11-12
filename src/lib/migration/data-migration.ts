@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { createHash } from 'crypto'
+
 /**
  * Data Migration Service
  * Handles legacy data import, backfills, dual-run support, and rollback
@@ -219,9 +221,8 @@ export function computeDataHash(
   record: Record<string, any>,
   fieldsToHash: string[]
 ): string {
-  const crypto = require('crypto')
   const data = fieldsToHash.map(f => record[f]).join('|')
-  return crypto.createHash('sha256').update(data).digest('hex')
+  return createHash('sha256').update(data).digest('hex')
 }
 
 /**

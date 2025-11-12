@@ -1,4 +1,3 @@
-import { parse } from 'csv-parse/sync';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 
