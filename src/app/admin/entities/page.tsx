@@ -74,7 +74,7 @@ export default function EntitiesPage() {
       fallback={
         <div className="p-6 text-center">
           <p className="text-gray-600">
-            You don't have permission to access this page.
+            {"You don't have permission to access this page."}
           </p>
         </div>
       }

@@ -170,7 +170,7 @@ export default function DashboardPage() {
                   Verifying Your Business Setup
                 </h3>
                 <p className="text-sm text-yellow-800 dark:text-yellow-300 mb-3">
-                  We're verifying your business details. This usually takes 5-10 minutes.
+                  {"We're verifying your business details. This usually takes 5-10 minutes."}
                 </p>
                 <Button
                   variant="outline"
