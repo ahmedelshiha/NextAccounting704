@@ -99,6 +99,12 @@ model User {
   bulkOperationHistoryChanges BulkOperationHistory[] @relation("BulkOperationHistoryChangedBy")
   reports                   Report[]
   exportSchedules           ExportSchedule[]
+  entitiesCreated           Entity[]              @relation("EntityCreatedBy")
+  entitiesUpdated           Entity[]              @relation("EntityUpdatedBy")
+  filingPeriodAssignments   FilingPeriod[]        @relation("FilingPeriodAssignee")
+  consentsAccepted          Consent[]
+  verificationAttempts      VerificationAttempt[] @relation("VerificationAttemptBy")
+  entityAuditLogs           EntityAuditLog[]
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
