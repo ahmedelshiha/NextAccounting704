@@ -1,10 +1,9 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getTenantFromRequest } from '@/lib/tenant'
 import { logAuditSafe } from '@/lib/observability-helpers'
 import { z } from 'zod'
+import { withTenantContext } from '@/lib/api-wrapper'
+import { requireTenantContext } from '@/lib/tenant-utils'
 
 const CreateTicketSchema = z.object({
   title: z.string().min(5).max(255),
@@ -26,15 +25,15 @@ const TicketFilterSchema = z.object({
   sortOrder: z.enum(['asc', 'desc']).default('desc').optional(),
 })
 
-export async function GET(request: NextRequest) {
+export const GET = withTenantContext(async (request: NextRequest) => {
   try {
-    const session = await getServerSession(authOptions)
+    const ctx = requireTenantContext()
 
-    if (!session?.user?.id) {
+    if (!ctx?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenantId = await getTenantFromRequest(request)
+    const tenantId = ctx.tenantId
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant context required' }, { status: 400 })
     }
@@ -59,7 +58,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (filters.assignedToMe) {
-      where.assignedToId = session.user.id
+      where.assignedToId = ctx.userId
     }
 
     // Count total
@@ -151,17 +150,17 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
 
-export async function POST(request: NextRequest) {
+export const POST = withTenantContext(async (request: NextRequest) => {
   try {
-    const session = await getServerSession(authOptions)
+    const ctx = requireTenantContext()
 
-    if (!session?.user?.id || !session.user.email) {
+    if (!ctx?.userId || !ctx?.userEmail) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenantId = await getTenantFromRequest(request)
+    const tenantId = ctx.tenantId
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant context required' }, { status: 400 })
     }
@@ -173,7 +172,7 @@ export async function POST(request: NextRequest) {
     const ticket = await prisma.supportTicket.create({
       data: {
         tenantId,
-        userId: session.user.id,
+        userId: ctx.userId,
         title: validated.title,
         description: validated.description,
         category: validated.category,
@@ -236,4 +235,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

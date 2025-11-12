@@ -1,11 +1,10 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getTenantFromRequest } from '@/lib/tenant'
 import { logAuditSafe } from '@/lib/observability-helpers'
 import { z } from 'zod'
 import Stripe from 'stripe'
+import { withTenantContext } from '@/lib/api-wrapper'
+import { requireTenantContext } from '@/lib/tenant-utils'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-04-10',
@@ -16,15 +15,15 @@ const AddPaymentMethodSchema = z.object({
   setAsDefault: z.boolean().default(false),
 })
 
-export async function GET(request: NextRequest) {
+export const GET = withTenantContext(async (request: NextRequest) => {
   try {
-    const session = await getServerSession(authOptions)
+    const ctx = requireTenantContext()
 
-    if (!session?.user?.id) {
+    if (!ctx?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenantId = await getTenantFromRequest(request)
+    const tenantId = ctx.tenantId
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant context required' }, { status: 400 })
     }
@@ -32,7 +31,7 @@ export async function GET(request: NextRequest) {
     // Fetch user's payment methods
     const paymentMethods = await prisma.userPaymentMethod.findMany({
       where: {
-        userId: session.user.id,
+        userId: ctx.userId,
         tenantId,
         status: 'ACTIVE',
       },
@@ -67,17 +66,17 @@ export async function GET(request: NextRequest) {
     console.error('Payment methods list API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-}
+})
 
-export async function POST(request: NextRequest) {
+export const POST = withTenantContext(async (request: NextRequest) => {
   try {
-    const session = await getServerSession(authOptions)
+    const ctx = requireTenantContext()
 
-    if (!session?.user?.id) {
+    if (!ctx?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenantId = await getTenantFromRequest(request)
+    const tenantId = ctx.tenantId
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant context required' }, { status: 400 })
     }
@@ -101,7 +100,7 @@ export async function POST(request: NextRequest) {
     // Check for duplicate
     const existing = await prisma.userPaymentMethod.findFirst({
       where: {
-        userId: session.user.id,
+        userId: ctx.userId,
         paymentMethodId: validated.paymentMethodId,
       },
     })
@@ -117,7 +116,7 @@ export async function POST(request: NextRequest) {
     if (validated.setAsDefault) {
       await prisma.userPaymentMethod.updateMany({
         where: {
-          userId: session.user.id,
+          userId: ctx.userId,
           tenantId,
           isDefault: true,
         },
@@ -144,7 +143,7 @@ export async function POST(request: NextRequest) {
     // Save payment method
     const paymentMethod = await prisma.userPaymentMethod.create({
       data: {
-        userId: session.user.id,
+        userId: ctx.userId,
         tenantId,
         paymentMethodId: validated.paymentMethodId,
         type: stripePaymentMethod.type,
@@ -191,4 +190,4 @@ export async function POST(request: NextRequest) {
     console.error('Payment methods add API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-}
+})

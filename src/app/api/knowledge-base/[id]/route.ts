@@ -1,10 +1,9 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getTenantFromRequest } from '@/lib/tenant'
 import { logAuditSafe } from '@/lib/observability-helpers'
 import { z } from 'zod'
+import { withTenantContext } from '@/lib/api-wrapper'
+import { requireTenantContext } from '@/lib/tenant-utils'
 
 const UpdateArticleSchema = z.object({
   title: z.string().min(5).max(500).optional(),
@@ -19,18 +18,18 @@ const UpdateArticleSchema = z.object({
 
 type UpdateArticleInput = z.infer<typeof UpdateArticleSchema>
 
-export async function GET(
+export const GET = withTenantContext(async (
   request: NextRequest,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession(authOptions)
+    const ctx = requireTenantContext()
 
-    if (!session?.user?.id) {
+    if (!ctx?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenantId = await getTenantFromRequest(request)
+    const tenantId = ctx.tenantId
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant context required' }, { status: 400 })
     }
@@ -69,20 +68,20 @@ export async function GET(
     console.error('Knowledge Base detail API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-}
+})
 
-export async function PATCH(
+export const PATCH = withTenantContext(async (
   request: NextRequest,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession(authOptions)
+    const ctx = requireTenantContext()
 
-    if (!session?.user?.id) {
+    if (!ctx?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenantId = await getTenantFromRequest(request)
+    const tenantId = ctx.tenantId
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant context required' }, { status: 400 })
     }
@@ -158,20 +157,20 @@ export async function PATCH(
     console.error('Knowledge Base update API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-}
+})
 
-export async function DELETE(
+export const DELETE = withTenantContext(async (
   request: NextRequest,
   { params }: { params: { id: string } }
-) {
+) => {
   try {
-    const session = await getServerSession(authOptions)
+    const ctx = requireTenantContext()
 
-    if (!session?.user?.id) {
+    if (!ctx?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenantId = await getTenantFromRequest(request)
+    const tenantId = ctx.tenantId
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant context required' }, { status: 400 })
     }
@@ -208,4 +207,4 @@ export async function DELETE(
     console.error('Knowledge Base delete API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
-}
+})

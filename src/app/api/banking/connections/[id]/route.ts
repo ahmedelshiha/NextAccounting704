@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { logAuditSafe } from '@/lib/observability-helpers'
-import { z } from 'zod'
 import { withTenantContext } from '@/lib/api-wrapper'
 import { requireTenantContext } from '@/lib/tenant-utils'
+import { z } from 'zod'
 
-const UpdateCategorySchema = z.object({
-  name: z.string().min(1).max(255).optional(),
-  description: z.string().max(1000).optional().nullable(),
-  icon: z.string().max(50).optional().nullable(),
-  order: z.number().optional(),
-  published: z.boolean().optional(),
+const UpdateConnectionSchema = z.object({
+  accountNumber: z.string().min(1).max(50).optional(),
+  bankName: z.string().min(1).max(255).optional(),
+  accountType: z.enum(['checking', 'savings', 'business']).optional(),
+  syncFrequency: z.enum(['DAILY', 'WEEKLY', 'MONTHLY', 'MANUAL']).optional(),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'ERROR']).optional(),
 })
-
-type UpdateCategoryInput = z.infer<typeof UpdateCategorySchema>
 
 export const GET = withTenantContext(async (
   request: NextRequest,
@@ -33,38 +31,42 @@ export const GET = withTenantContext(async (
 
     const { id } = params
 
-    // Fetch category with article count
-    const category = await prisma.knowledgeBaseCategory.findFirst({
+    // Fetch connection
+    const connection = await prisma.bankingConnection.findFirst({
       where: { id, tenantId },
       select: {
         id: true,
-        name: true,
-        slug: true,
-        description: true,
-        icon: true,
-        order: true,
-        published: true,
+        provider: true,
+        accountNumber: true,
+        bankName: true,
+        accountType: true,
+        status: true,
+        syncFrequency: true,
+        lastSyncAt: true,
+        lastSyncError: true,
+        entityId: true,
         createdAt: true,
         updatedAt: true,
         _count: {
-          select: { articles: true },
+          select: { transactions: true },
         },
       },
     })
 
-    if (!category) {
-      return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+    if (!connection) {
+      return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
     }
 
     return NextResponse.json(
       {
-        ...category,
-        articleCount: category._count.articles,
+        ...connection,
+        transactionCount: connection._count.transactions,
+        _count: undefined,
       },
       { status: 200 }
     )
   } catch (error) {
-    console.error('Knowledge Base category detail API error:', error)
+    console.error('Banking connection detail error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 })
@@ -87,44 +89,44 @@ export const PATCH = withTenantContext(async (
 
     const { id } = params
     const body = await request.json()
-    const validated = UpdateCategorySchema.parse(body)
+    const validated = UpdateConnectionSchema.parse(body)
 
-    // Verify category exists and belongs to tenant
-    const category = await prisma.knowledgeBaseCategory.findFirst({
+    // Verify connection exists and belongs to tenant
+    const connection = await prisma.bankingConnection.findFirst({
       where: { id, tenantId },
     })
 
-    if (!category) {
-      return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+    if (!connection) {
+      return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
     }
 
-    // Update category
-    const updatedCategory = await prisma.knowledgeBaseCategory.update({
+    // Update connection
+    const updatedConnection = await prisma.bankingConnection.update({
       where: { id },
       data: validated,
       select: {
         id: true,
-        name: true,
-        slug: true,
-        description: true,
-        icon: true,
-        order: true,
-        published: true,
-        createdAt: true,
+        provider: true,
+        accountNumber: true,
+        bankName: true,
+        accountType: true,
+        status: true,
+        syncFrequency: true,
+        lastSyncAt: true,
+        lastSyncError: true,
         updatedAt: true,
       },
     })
 
     await logAuditSafe({
-      action: 'knowledge_base:category:update',
+      action: 'banking:update_connection',
       details: {
-        categoryId: id,
-        name: updatedCategory.name,
+        connectionId: id,
         changes: Object.keys(validated),
       },
     }).catch(() => {})
 
-    return NextResponse.json(updatedCategory, { status: 200 })
+    return NextResponse.json(updatedConnection, { status: 200 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -136,7 +138,7 @@ export const PATCH = withTenantContext(async (
       )
     }
 
-    console.error('Knowledge Base category update API error:', error)
+    console.error('Banking connection update error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 })
@@ -159,48 +161,46 @@ export const DELETE = withTenantContext(async (
 
     const { id } = params
 
-    // Verify category exists and belongs to tenant
-    const category = await prisma.knowledgeBaseCategory.findFirst({
+    // Verify connection exists and belongs to tenant
+    const connection = await prisma.bankingConnection.findFirst({
       where: { id, tenantId },
+      select: {
+        id: true,
+        accountNumber: true,
+        bankName: true,
+        sessionToken: true,
+      },
     })
 
-    if (!category) {
-      return NextResponse.json({ error: 'Category not found' }, { status: 404 })
+    if (!connection) {
+      return NextResponse.json({ error: 'Connection not found' }, { status: 404 })
     }
 
-    // Check if category has articles
-    const articleCount = await prisma.knowledgeBaseArticle.count({
-      where: { categoryId: id },
+    // Delete all associated transactions first
+    await prisma.bankingTransaction.deleteMany({
+      where: { connectionId: id },
     })
 
-    if (articleCount > 0) {
-      return NextResponse.json(
-        {
-          error: 'Cannot delete category with articles. Please move or delete articles first.',
-        },
-        { status: 409 }
-      )
-    }
-
-    // Delete category
-    await prisma.knowledgeBaseCategory.delete({
+    // Delete connection
+    await prisma.bankingConnection.delete({
       where: { id },
     })
 
     await logAuditSafe({
-      action: 'knowledge_base:category:delete',
+      action: 'banking:delete_connection',
       details: {
-        categoryId: id,
-        name: category.name,
+        connectionId: id,
+        bankName: connection.bankName,
+        accountNumber: connection.accountNumber,
       },
     }).catch(() => {})
 
     return NextResponse.json(
-      { success: true, message: 'Category deleted' },
+      { success: true, message: 'Connection deleted' },
       { status: 200 }
     )
   } catch (error) {
-    console.error('Knowledge Base category delete API error:', error)
+    console.error('Banking connection delete error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 })

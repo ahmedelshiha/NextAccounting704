@@ -1,23 +1,22 @@
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getTenantFromRequest } from '@/lib/tenant'
 import { logAuditSafe } from '@/lib/observability-helpers'
 import { esignService } from '@/lib/esign/esign-service'
+import { withTenantContext } from '@/lib/api-wrapper'
+import { requireTenantContext } from '@/lib/tenant-utils'
 
-export async function GET(
+export const GET = withTenantContext(async (
   request: NextRequest,
   { params }: { params: { id: string; sessionId: string } }
-) {
+) => {
   try {
-    const session = await getServerSession(authOptions)
+    const ctx = requireTenantContext()
 
-    if (!session?.user?.id) {
+    if (!ctx?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenantId = await getTenantFromRequest(request)
+    const tenantId = ctx.tenantId
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant context required' }, { status: 400 })
     }
@@ -98,20 +97,20 @@ export async function GET(
       { status: 500 }
     )
   }
-}
+})
 
-export async function DELETE(
+export const DELETE = withTenantContext(async (
   request: NextRequest,
   { params }: { params: { id: string; sessionId: string } }
-) {
+) => {
   try {
-    const session = await getServerSession(authOptions)
+    const ctx = requireTenantContext()
 
-    if (!session?.user?.id) {
+    if (!ctx?.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const tenantId = await getTenantFromRequest(request)
+    const tenantId = ctx.tenantId
     if (!tenantId) {
       return NextResponse.json({ error: 'Tenant context required' }, { status: 400 })
     }
@@ -136,7 +135,7 @@ export async function DELETE(
       details: {
         documentId: id,
         sessionId,
-        cancelledBy: session.user.id,
+        cancelledBy: ctx.userId,
       },
     }).catch(() => {})
 
@@ -151,4 +150,4 @@ export async function DELETE(
       { status: 500 }
     )
   }
-}
+})
