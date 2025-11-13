@@ -99,7 +99,7 @@ export const UserForm = React.forwardRef<HTMLFormElement, UserFormProps>(
     const handleGeneratePassword = useCallback(() => {
       const newPassword = generateTemporaryPassword()
       setTempPassword(newPassword)
-      setValue('temporaryPassword', newPassword)
+      setValue('temporaryPassword' as Path<UserCreate | UserEdit>, newPassword)
       toast.success('Temporary password generated')
     }, [setValue])
 
