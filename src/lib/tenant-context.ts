@@ -79,7 +79,11 @@ class TenantContextManager {
   getContext(): TenantContext {
     const context = this.storage.getStore()
     if (!context) {
-      throw new Error('Tenant context is not available on the current execution path')
+      const debugInfo = {
+        asyncLocalStorageAvailable,
+        isServerEnv: typeof window === 'undefined',
+      }
+      throw new Error(`Tenant context is not available on the current execution path. Debug: ${JSON.stringify(debugInfo)}`)
     }
     return context
   }
