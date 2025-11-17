@@ -76,11 +76,9 @@ export const POST = withTenantContext(async (request: NextRequest) => {
       data: {
         tenantId: ctx.tenantId,
         number: data.number,
-        description: data.description,
         totalCents: Math.round(data.amount * 100),
         currency: data.currency,
-        status: 'PENDING',
-        dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+        status: 'UNPAID',
       },
     })
 
