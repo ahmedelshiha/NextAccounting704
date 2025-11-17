@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withTenantContext } from '@/lib/api-wrapper'
 import { requireTenantContext } from '@/lib/tenant-utils'
+import type { TenantContext } from '@/lib/tenant-context'
 import prisma from '@/lib/prisma'
 import { logger } from '@/lib/logger'
 import { z } from 'zod'
