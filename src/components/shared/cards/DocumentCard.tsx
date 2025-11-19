@@ -71,8 +71,8 @@ export default function DocumentCard({
   className = '',
 }: DocumentCardProps) {
   const { has } = usePermissions()
-  const canDeleteDocument = has('documents:delete')
-  const canViewDocument = has('documents:view')
+  const canDeleteDocument = has(PERMISSIONS.DOCUMENTS_DELETE)
+  const canViewDocument = has(PERMISSIONS.DOCUMENTS_READ)
 
   if (!document || !canViewDocument) return null
 
