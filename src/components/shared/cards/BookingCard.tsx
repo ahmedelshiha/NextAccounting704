@@ -7,7 +7,7 @@ import { PERMISSIONS } from '@/lib/permissions'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Edit2, Trash2, Calendar, Clock, User, MapPin } from 'lucide-react'
+import { Edit2, Trash2, Calendar, Clock, User } from 'lucide-react'
 import { ComponentVariant, CardComponentProps } from '../types'
 import { formatDate, formatRelativeTime } from '@/lib/shared/formatters'
 
@@ -207,13 +207,6 @@ export default function BookingCard({
           </div>
         )}
 
-        {/* Location */}
-        {booking.location && (
-          <div className="flex items-start gap-2 text-sm text-gray-700">
-            <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5" />
-            <span>{booking.location}</span>
-          </div>
-        )}
 
         {/* Notes (admin) */}
         {variant === 'admin' && booking.notes && (

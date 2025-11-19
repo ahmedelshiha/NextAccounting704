@@ -76,11 +76,13 @@ export default function DocumentCard({
 
   if (!document || !canViewDocument) return null
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     PENDING: 'bg-yellow-100 text-yellow-800',
     SCANNING: 'bg-blue-100 text-blue-800',
-    SAFE: 'bg-green-100 text-green-800',
-    QUARANTINED: 'bg-red-100 text-red-800',
+    SCANNED: 'bg-blue-50 text-blue-700',
+    CLEAN: 'bg-green-100 text-green-800',
+    INFECTED: 'bg-red-100 text-red-800',
+    ERROR: 'bg-orange-100 text-orange-800',
     ARCHIVED: 'bg-gray-100 text-gray-800',
   }
 
@@ -94,7 +96,7 @@ export default function DocumentCard({
 
   const handleDownload = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (onDownload && !loading && document.status !== 'QUARANTINED') {
+    if (onDownload && !loading && document.status !== 'INFECTED' && document.status !== 'ERROR') {
       onDownload(document.id)
     }
   }
@@ -173,10 +175,10 @@ export default function DocumentCard({
           <div className="flex items-center gap-2">
             <Badge className={statusColors[document.status] || 'bg-gray-100 text-gray-800'}>
               {document.status === 'SCANNING' && <span className="mr-1">Scanning...</span>}
-              {document.status === 'SAFE' && (
+              {document.status === 'CLEAN' && (
                 <CheckCircle2 className="h-3 w-3 mr-1" />
               )}
-              {document.status === 'QUARANTINED' && (
+              {(document.status === 'INFECTED' || document.status === 'ERROR') && (
                 <AlertCircle className="h-3 w-3 mr-1" />
               )}
               {document.status}
