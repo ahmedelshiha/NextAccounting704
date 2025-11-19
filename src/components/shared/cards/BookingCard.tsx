@@ -7,7 +7,7 @@ import { PERMISSIONS } from '@/lib/permissions'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Edit2, Trash2, Calendar, Clock, User, MapPin } from 'lucide-react'
+import { Edit2, Trash2, Calendar, Clock, User } from 'lucide-react'
 import { ComponentVariant, CardComponentProps } from '../types'
 import { formatDate, formatRelativeTime } from '@/lib/shared/formatters'
 
