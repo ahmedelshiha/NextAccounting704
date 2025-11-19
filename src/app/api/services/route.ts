@@ -98,8 +98,8 @@ export const GET = withTenantContext(
         await logAudit({
           action: 'security.ratelimit.block',
           details: { ip, key: `services-list:${ip}`, route: new URL(request.url).pathname },
-        })
-        return respond.rateLimitExceeded()
+        }).catch(() => {}) // Don't fail if audit logging fails
+        return respond.tooMany('Rate limit exceeded')
       }
 
       let ctx: any = null
