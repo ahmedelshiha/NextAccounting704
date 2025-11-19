@@ -71,6 +71,7 @@ export default function TaskCard({
     IN_REVIEW: 'bg-purple-100 text-purple-800',
     COMPLETED: 'bg-green-100 text-green-800',
     BLOCKED: 'bg-red-100 text-red-800',
+    ON_HOLD: 'bg-orange-100 text-orange-800',
     CANCELLED: 'bg-gray-100 text-gray-800',
   }
 
