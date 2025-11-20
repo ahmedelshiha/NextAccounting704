@@ -388,6 +388,8 @@ model Tenant {
   bills                 Bill[]
   approvals             Approval[]
   approvalHistory       ApprovalHistory[]
+  notifications         Notification[]
+  notificationPreferences NotificationPreference[]
 
   @@index([status])
 }
