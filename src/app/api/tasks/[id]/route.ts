@@ -202,6 +202,19 @@ export const DELETE = withTenantContext(
         return respond.notFound('Task not found')
       }
 
+      // Log audit event before deletion
+      await logAudit({
+        tenantId,
+        userId: user.id,
+        action: 'TASK_DELETED',
+        entity: 'Task',
+        entityId: taskId,
+        changes: {
+          title: task.title,
+          status: task.status,
+        },
+      })
+
       // Delete the task (cascade will handle comments)
       await prisma.task.delete({
         where: { id: taskId },
