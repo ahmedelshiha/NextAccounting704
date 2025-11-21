@@ -1319,7 +1319,7 @@ export default function LocalizationContent() {
                         </div>
 
                         <div className="space-y-3">
-                          {analyticsData.distribution.map((item: { language: string; count: number }, idx: number) => (
+                          {analyticsData.distribution.map((item: { language: string; count: number; percentage?: number }, idx: number) => (
                             <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                               <div className="flex items-center gap-3">
                                 <div
