@@ -1,8 +1,7 @@
-import { type PageProps } from '@/.next/types'
 import ProfileManagementPanel from '@/components/admin/profile/ProfileManagementPanel'
 
 type PagePropsWithSearchParams = {
-  searchParams?: Record<string, string | string[]> | Promise<Record<string, string | string[]>>
+  searchParams?: Promise<Record<string, string | string[]>>
 }
 
 export default async function AdminProfilePage({ searchParams }: PagePropsWithSearchParams) {
