@@ -52,12 +52,16 @@ model User {
   experienceYears           Int?                    // Years of experience
   isActive                  Boolean?                @default(true) // User active status
   preferences               Json?
+  bio                       String?
+  isAdmin                   Boolean?                @default(false)
+  lastLogin                 DateTime?
   attachments               Attachment[]
   bookingPreferences        BookingPreferences?
   assignedByServiceRequests ServiceRequest[]        @relation("ServiceRequestAssignedBy")
   clientServiceRequests     ServiceRequest[]        @relation("ServiceRequestClient")
-  tasks                     Task[]
   taskComments              TaskComment[]
+  tasksAssigned             Task[]                  @relation("TaskAssignee")
+  tasksAsClient             Task[]                  @relation("TaskClient")
   assignedWorkOrders        WorkOrder[]             @relation("WorkOrderAssignee")
   workOrdersAsClient        WorkOrder[]             @relation("WorkOrderClient")
   accounts                  Account[]
@@ -573,7 +577,11 @@ model Booking {
   assignedTeamMemberId String?
   serviceRequestId     String?
   createdById          String?         // User who created the booking
+  completedAt          DateTime?
+  amount               Decimal?
+  rating               Int?
   workOrders           WorkOrder[]
+  tasks                Task[]
   assignedTeamMember   TeamMember?     @relation(fields: [assignedTeamMemberId], references: [id])
   client               User            @relation(fields: [clientId], references: [id], onDelete: Cascade)
   createdBy            User?           @relation("BookingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
@@ -702,10 +710,16 @@ model Task {
   complianceDeadline DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+  tags               String[]           @default([])
+  estimatedHours     Int?
+  clientId           String?
+  bookingId          String?
   complianceRecords  ComplianceRecord[]
-  assignee           User?              @relation(fields: [assigneeId], references: [id])
+  assignee           User?              @relation("TaskAssignee", fields: [assigneeId], references: [id])
   createdBy          User?              @relation("TaskCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   tenant             Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  client             User?              @relation("TaskClient", fields: [clientId], references: [id], onDelete: SetNull)
+  booking            Booking?           @relation(fields: [bookingId], references: [id], onDelete: SetNull)
   comments           TaskComment[]
   requestTasks       RequestTask[]
 
@@ -715,6 +729,8 @@ model Task {
   @@index([tenantId, createdAt])
   @@index([tenantId, assigneeId])
   @@index([tenantId, status, dueAt])
+  @@index([clientId])
+  @@index([bookingId])
 }
 
 model ComplianceRecord {
@@ -868,6 +884,7 @@ model TeamMember {
   bookingBuffer           Int                @default(15)
   autoAssign              Boolean            @default(true)
   stats                   Json?
+  image                   String?
   createdAt               DateTime           @default(now())
   updatedAt               DateTime           @updatedAt
   availabilitySlots       AvailabilitySlot[]

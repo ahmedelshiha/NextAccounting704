@@ -3,6 +3,7 @@ import { withAdminAuth } from '@/lib/api-wrapper'
 import { respond } from '@/lib/api-response'
 import prisma from '@/lib/prisma'
 import { logAudit } from '@/lib/audit'
+import { tenantContext } from '@/lib/tenant-context'
 import { z } from 'zod'
 
 const UserListFilterSchema = z.object({
@@ -27,13 +28,18 @@ const UserCreateSchema = z.object({
  * List all users with filtering and pagination
  */
 export const GET = withAdminAuth(
-  async (request, { user, tenantId }) => {
+  async (request) => {
     try {
+      const ctx = tenantContext()
+      if (!ctx?.tenantId) {
+        return respond.unauthorized('Tenant context not found')
+      }
+
       const { searchParams } = new URL(request.url)
       const filters = UserListFilterSchema.parse(Object.fromEntries(searchParams))
 
       // Build query
-      const where: any = { tenantId }
+      const where: any = { tenantId: ctx.tenantId }
 
       if (filters.role) {
         where.role = filters.role
@@ -97,8 +103,7 @@ export const GET = withAdminAuth(
       console.error('User list error:', error)
       return respond.serverError()
     }
-  },
-  { requireAuth: true }
+  }
 )
 
 /**
@@ -106,8 +111,13 @@ export const GET = withAdminAuth(
  * Create a new user
  */
 export const POST = withAdminAuth(
-  async (request, { user, tenantId }) => {
+  async (request) => {
     try {
+      const ctx = tenantContext()
+      if (!ctx?.tenantId) {
+        return respond.unauthorized('Tenant context not found')
+      }
+
       const body = await request.json()
       const input = UserCreateSchema.parse(body)
 
@@ -115,7 +125,7 @@ export const POST = withAdminAuth(
       const existingUser = await prisma.user.findFirst({
         where: {
           email: input.email,
-          tenantId,
+          tenantId: ctx.tenantId,
         },
       })
 
