@@ -188,7 +188,7 @@ export const POST = withTenantContext(
 
       // Log audit event
       await logAudit({
-        userId: user.id,
+        userId: ctx.userId,
         action: 'TASK_CREATED',
         entity: 'Task',
         entityId: task.id,
