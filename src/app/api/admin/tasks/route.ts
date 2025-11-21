@@ -17,10 +17,10 @@ export const GET = withTenantContext(
   async (request, { params }) => {
     try {
       const ctx = requireTenantContext()
-      const { user, tenantId } = ctx
+      const { userId, tenantId, role } = ctx
 
       // Verify admin access
-      if (user?.role !== 'SUPER_ADMIN' && !user?.tenantRole?.includes('ADMIN')) {
+      if (role !== 'SUPER_ADMIN' && role !== 'ADMIN') {
         return respond.forbidden('Only administrators can access this endpoint')
       }
 
