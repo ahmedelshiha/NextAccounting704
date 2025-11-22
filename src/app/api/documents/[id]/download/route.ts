@@ -1,17 +1,20 @@
 'use server'
 
-import { withTenantAuth } from '@/lib/auth-middleware'
+import { NextRequest, NextResponse } from 'next/server'
+import { withTenantContext } from '@/lib/api-wrapper'
+import { requireTenantContext } from '@/lib/tenant-utils'
 import { respond } from '@/lib/api-response'
 import prisma from '@/lib/prisma'
-import { redirect } from 'next/navigation'
 
 /**
  * GET /api/documents/[id]/download
  * Download document with permission check and audit logging
  */
-export const GET = withTenantAuth(async (request: any, { params }: any) => {
+export const GET = withTenantContext(async (request: NextRequest, { params }: any) => {
   try {
-    const { userId, tenantId, userRole } = request as any
+    const ctx = requireTenantContext()
+    const { tenantId, userId, role } = ctx
+    const userRole = role
     const document = await prisma.attachment.findFirst({
       where: {
         id: params.id,
@@ -68,9 +71,9 @@ export const GET = withTenantAuth(async (request: any, { params }: any) => {
           downloadedBy: userId,
         },
       },
-    }).catch(() => {})
+    }).catch(() => { })
 
-    return Response.redirect(document.url, 302)
+    return NextResponse.redirect(document.url, 302)
   } catch (error) {
     console.error('Download document error:', error)
     return respond.serverError()
