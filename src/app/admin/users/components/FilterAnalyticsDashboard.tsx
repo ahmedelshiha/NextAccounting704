@@ -108,7 +108,7 @@ export const FilterAnalyticsDashboard = React.memo(function FilterAnalyticsDashb
             </CardHeader>
             <CardContent>
               <MostUsedFiltersChart
-                stats={filterUsageStats.slice(0, 5) as Record<string, unknown>[]}
+                stats={filterUsageStats.slice(0, 5) as unknown as Record<string, unknown>[]}
                 isLoading={isLoading}
               />
             </CardContent>
@@ -125,7 +125,7 @@ export const FilterAnalyticsDashboard = React.memo(function FilterAnalyticsDashb
               </CardHeader>
               <CardContent>
                 <FilterCombinationsTable
-                  combinations={filterCombinations.slice(0, 5) as Record<string, unknown>[]}
+                  combinations={filterCombinations.slice(0, 5) as unknown as Record<string, unknown>[]}
                   isLoading={isLoading}
                 />
               </CardContent>
