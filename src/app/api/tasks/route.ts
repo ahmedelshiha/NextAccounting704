@@ -156,7 +156,13 @@ export const POST = withTenantContext(
       // Create the task
       const task = await prisma.task.create({
         data: {
-          ...input,
+          title: input.title,
+          description: input.description,
+          priority: input.priority,
+          dueAt: input.dueAt,
+          assigneeId: input.assigneeId,
+          complianceRequired: input.complianceRequired,
+          complianceDeadline: input.complianceDeadline,
           tenantId: tenantId as string,
           createdById: userId as string,
         },

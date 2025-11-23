@@ -34,9 +34,15 @@ interface Document {
     name: string
     email: string
   }
+  uploadedById?: string
+  tenantId?: string
+  storageKey?: string
+  visibility?: string
   status: string
   isStarred: boolean
   isQuarantined: boolean
+  createdAt?: string
+  updatedAt?: string
 }
 
 interface DocumentsListState {

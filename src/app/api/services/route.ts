@@ -22,7 +22,7 @@ function filterServiceFields(service: any, userRole: string) {
   }
 
   // Portal user - exclude admin-only fields
-  const { 
+  const {
     basePrice,
     advanceBookingDays,
     minAdvanceHours,
@@ -33,7 +33,7 @@ function filterServiceFields(service: any, userRole: string) {
     costPerUnit,
     profitMargin,
     internalNotes,
-    ...portalFields 
+    ...portalFields
   } = service
 
   return portalFields
@@ -99,7 +99,7 @@ export const GET = withTenantContext(
         await logAudit({
           action: 'security.ratelimit.block',
           metadata: { ip, key: `services-list:${ip}`, route: new URL(request.url).pathname },
-        }).catch(() => {}) // Don't fail if audit logging fails
+        }).catch(() => { }) // Don't fail if audit logging fails
         return respond.tooMany('Rate limit exceeded')
       }
 
@@ -121,7 +121,8 @@ export const GET = withTenantContext(
       // Get cached services
       const result = await getCachedServices(request)
 
-      if (!result || !Array.isArray(result?.services)) {
+      // Check if result is valid and has services array
+      if (!result || typeof result !== 'object' || !('services' in result) || !Array.isArray(result.services)) {
         return respond.ok(
           { services: [], total: 0, page: 0, limit: 20, totalPages: 0 }
         )

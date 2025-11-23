@@ -69,7 +69,13 @@ export const POST = withTenantContext(
       const body = await request.json();
       const validated = ProcessDefinitionSchema.parse(body);
 
-      const process = processEngine.createProcessDefinition(validated);
+      // Ensure id is set - generate if not provided
+      const processData = {
+        ...validated,
+        id: validated.id || `proc-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+      };
+
+      const process = processEngine.createProcessDefinition(processData as any);
 
       return NextResponse.json({
         success: true,

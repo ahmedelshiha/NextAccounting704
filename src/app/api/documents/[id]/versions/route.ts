@@ -20,7 +20,7 @@ export const GET = withTenantContext(async (request: NextRequest, { params }: an
     const document = await prisma.attachment.findFirst({
       where: {
         id: params.id,
-        tenantId,
+        tenantId: tenantId as string,
       },
     })
 
@@ -37,7 +37,7 @@ export const GET = withTenantContext(async (request: NextRequest, { params }: an
     const versions = await prisma.documentVersion.findMany({
       where: {
         attachmentId: params.id,
-        tenantId,
+        tenantId: tenantId as string,
       },
       include: {
         uploader: {
@@ -72,7 +72,7 @@ export const GET = withTenantContext(async (request: NextRequest, { params }: an
     // Log access
     await prisma.auditLog.create({
       data: {
-        tenantId,
+        tenantId: tenantId as string,
         action: 'documents:view_versions',
         userId,
         resource: 'Document',
@@ -105,7 +105,7 @@ export const POST = withTenantContext(async (request: NextRequest, { params }: a
     const document = await prisma.attachment.findFirst({
       where: {
         id: params.id,
-        tenantId,
+        tenantId: tenantId as string,
       },
     })
 
@@ -167,7 +167,7 @@ export const POST = withTenantContext(async (request: NextRequest, { params }: a
         url: versionUrl,
         uploaderId: userId,
         changeDescription: changeDescription || null,
-        tenantId,
+        tenantId: tenantId as string,
       },
       include: {
         uploader: {
@@ -194,7 +194,7 @@ export const POST = withTenantContext(async (request: NextRequest, { params }: a
     // Log audit
     await prisma.auditLog.create({
       data: {
-        tenantId,
+        tenantId: tenantId as string,
         action: 'documents:create_version',
         userId,
         resource: 'DocumentVersion',

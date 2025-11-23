@@ -178,9 +178,9 @@ export const GET = withTenantContext(async (request: NextRequest) => {
     // Log access
     await prisma.auditLog.create({
       data: {
-        tenantId,
+        tenantId: tenantId as string,
         action: 'documents:list',
-        userId,
+        userId: userId as string,
         resource: 'Document',
         metadata: {
           count: documents.length,
@@ -281,8 +281,8 @@ export const POST = withTenantContext(async (request: NextRequest) => {
         size: file.size,
         contentType: file.type,
         provider: process.env.UPLOADS_PROVIDER || 'vercel',
-        tenantId,
-        uploaderId: userId,
+        tenantId: tenantId as string,
+        uploaderId: userId as string,
         avStatus: 'pending', // Will be scanned asynchronously
         metadata: {
           description: description || null,
@@ -307,8 +307,8 @@ export const POST = withTenantContext(async (request: NextRequest) => {
           attachmentId: document.id,
           linkedToType,
           linkedToId,
-          linkedBy: userId,
-          tenantId,
+          linkedBy: userId as string,
+          tenantId: tenantId as string,
         },
       }).catch(() => { }) // Non-critical
     }
@@ -316,9 +316,9 @@ export const POST = withTenantContext(async (request: NextRequest) => {
     // Log audit
     await prisma.auditLog.create({
       data: {
-        tenantId,
+        tenantId: tenantId as string,
         action: 'documents:upload',
-        userId,
+        userId: userId as string,
         resource: 'Document',
         metadata: {
           documentName: document.name,

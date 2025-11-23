@@ -20,7 +20,7 @@ export const GET = withTenantContext(async (request: NextRequest, { params }: an
     const document = await prisma.attachment.findFirst({
       where: {
         id: params.id,
-        tenantId,
+        tenantId: tenantId as string,
       },
       include: {
         uploader: {
@@ -142,7 +142,7 @@ export const PUT = withTenantContext(async (request: NextRequest, { params }: an
     const document = await prisma.attachment.findFirst({
       where: {
         id: params.id,
-        tenantId,
+        tenantId: tenantId as string,
       },
     })
 
@@ -236,7 +236,7 @@ export const DELETE = withTenantContext(async (request: NextRequest, { params }:
     const document = await prisma.attachment.findFirst({
       where: {
         id: params.id,
-        tenantId,
+        tenantId: tenantId as string,
       },
     })
 
