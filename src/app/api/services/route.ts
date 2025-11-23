@@ -75,7 +75,7 @@ const getCachedServices = withCache<any>(
 
     // Filter fields based on role
     if (Array.isArray(result?.services)) {
-      result.services = result.services.map((s: any) => filterServiceFields(s, userRole))
+      result.services = result.services.map((s: any) => filterServiceFields(s, userRole ?? 'PUBLIC'))
     }
 
     return result
