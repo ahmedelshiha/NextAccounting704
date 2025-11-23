@@ -234,7 +234,7 @@ function SummaryCard({
  * Most used filters chart
  */
 interface MostUsedFiltersChartProps {
-  stats: any[]
+  stats: Record<string, unknown>[]
   isLoading?: boolean
 }
 
